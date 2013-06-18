@@ -33,7 +33,7 @@ var logger = require("cinovo-logger");
 In your JavaScript code append the file endpoint.
 
 `````javascript
-logger.append(require("cinovo-logger-file")(true, true, true, true, "./log", "log", ".txt", 1, 60));
+logger.append(require("cinovo-logger-file")(true, true, true, true, "./log", "log", ".txt", 1, 60, 10));
 `````
 
 ### Log something
