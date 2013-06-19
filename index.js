@@ -72,6 +72,7 @@ FileEndpoint.prototype.openFile = function(file, errCallback) {
 				encoding: "utf8",
 				mode: 0666
 			});
+			// TODO start timeout for max age
 			try {
 				errCallback(); // TODO listen for error evets? how to detect if the writestream could not be created
 			} finally {
@@ -92,6 +93,7 @@ FileEndpoint.prototype.createFile = function(errCallback) {
 			encoding: "utf8",
 			mode: 0666
 		});
+		// TODO start timeout for max age
 		try {
 			errCallback(); // TODO listen for error evets? how to detect if the writestream could not be created
 		} finally {
@@ -118,6 +120,7 @@ FileEndpoint.prototype.createFile = function(errCallback) {
 FileEndpoint.prototype.closeFile = function(errCallback) {
 	this.fileWriteStream.removeAllListeners("drain");
 	var self = this;
+	// TODO stop timeout for max age
 	this.fileWriteStream.end(function(err) {
 		if (err) {
 			errCallback(err);
