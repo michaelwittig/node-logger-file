@@ -20,7 +20,7 @@ describe("nameclash", function(){
 					fn: "testfn"
 				}
 			};
-			endpoint(true, true, true, true, "./test/log", "nameclash_", ".txt", 100, 60, 1000, function(err, e) {
+			endpoint(true, true, true, true, "./test/log", "nameclash_", ".txt", 100, 60 * 60, 1000, function(err, e) {
 				if (err) {
 					throw err;
 				} else {

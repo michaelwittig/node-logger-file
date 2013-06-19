@@ -7,22 +7,22 @@ var filePrefix = "startup_" + uuid.v4() + "_";
 describe("startup", function(){
 	describe("()", function() {
 		it("should create file on first try", function(done) {
-			endpoint(true, true, true, true, "./test/log", filePrefix, ".txt", 10, 3, 10, function(err, e) {
+			endpoint(true, true, true, true, "./test/log", filePrefix, ".txt", 10, 60 * 60, 10, function(err, e) {
 				if (err) {
 					throw err;
 				} else {
-					e.on("createFile", function(file) {
+					e.once("createFile", function(file) {
 						done();
 					});
 				}
 			});
 		});
 		it("should open file on second try", function(done) {
-			endpoint(true, true, true, true, "./test/log", filePrefix, ".txt", 10, 3, 10, function(err, e) {
+			endpoint(true, true, true, true, "./test/log", filePrefix, ".txt", 10, 60 * 60, 10, function(err, e) {
 				if (err) {
 					throw err;
 				} else {
-					e.on("openFile", function(file) {
+					e.once("openFile", function(file) {
 						done();
 					});
 				}
@@ -30,12 +30,18 @@ describe("startup", function(){
 		});
 		it("should create file because of age", function(done) {
 			setTimeout(function() {
-				endpoint(true, true, true, true, "./test/log", filePrefix, ".txt", 10, 3, 10, function(err, e) {
+				endpoint(true, true, true, true, "./test/log", filePrefix, ".txt", 10, 1, 10, function(err, e) {
 					if (err) {
 						throw err;
 					} else {
-						e.on("createFile", function(file) {
-							done();
+						e.once("createFile", function(file) {
+							e.stop(function(err) {
+								if (err) {
+									throw err;
+								} else {
+									done();
+								}
+							});
 						});
 					}
 				});

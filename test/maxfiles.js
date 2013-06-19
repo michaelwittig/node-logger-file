@@ -21,7 +21,7 @@ describe("maxfiles", function(){
 				}
 			};
 			var deletes = 0, creates = 0;
-			endpoint(true, true, true, true, "./test/log", "maxfiles_", ".txt", 2, 2, 2, function(err, e) {
+			endpoint(true, true, true, true, "./test/log", "maxfiles_", ".txt", 2, 60 * 60, 2, function(err, e) {
 				if (err) {
 					throw err;
 				} else {

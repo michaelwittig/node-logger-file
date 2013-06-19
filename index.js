@@ -35,6 +35,7 @@ function FileEndpoint(debug, info, error, critial, dir, filePrefix, fileSuffix, 
 	this.fileBusy = undefined;
 	this.fileSize = undefined;  // in bytes
 	this.fileWriteStream = undefined;
+	this.fileTimer = undefined;
 }
 util.inherits(FileEndpoint, logger.Endpoint);
 FileEndpoint.prototype.log = function(log, errCallback) {
@@ -59,20 +60,29 @@ FileEndpoint.prototype.log = function(log, errCallback) {
 	}
 };
 FileEndpoint.prototype.openFile = function(file, errCallback) {
-	this.file = file;
-	this.fileBusy = false;
 	var self = this;
-	fs.stat(this.file, function(err, stats) {
+	fs.stat(file, function(err, stats) {
 		if (err) {
 			errCallback(err);
 		} else {
+			self.file = file;
+			self.fileBusy = false;
 			self.fileSize = stats.size;
 			self.fileWriteStream = fs.createWriteStream(self.file, {
 				flags: "a",
 				encoding: "utf8",
 				mode: 0666
 			});
-			// TODO start timeout for max age
+			var fileLifeTime = (new Date()).getTime() - stats.ctime.getTime();
+			var timeout = Math.max(1, (self.maxFileAge * 1000) - fileLifeTime);
+			clearTimeout(self.fileTimer);
+			self.fileTimer = setTimeout(function() {
+				self.rollFile(function(err) {
+					if(err) {
+						self.emit("error", err);
+					}
+				});
+			}, timeout);
 			try {
 				errCallback(); // TODO listen for error evets? how to detect if the writestream could not be created
 			} finally {
@@ -106,7 +116,14 @@ FileEndpoint.prototype.createFile = function(errCallback) {
 			encoding: "utf8",
 			mode: 0666
 		});
-		// TODO start timeout for max age
+		clearTimeout(self.fileTimer);
+		self.fileTimer = setTimeout(function() {
+			self.rollFile(function(err) {
+				if(err) {
+					self.emit("error", err);
+				}
+			});
+		}, self.maxFileAge * 1000);
 		try {
 			errCallback(); // TODO listen for error evets? how to detect if the writestream could not be created
 		} finally {
@@ -159,15 +176,20 @@ FileEndpoint.prototype.createFile = function(errCallback) {
 			}
 		}
 	});
-
-
-
-
 };
+function closeFileWriteStream(fileWriteStream, errCallback) {
+	fileWriteStream.removeAllListeners("drain");
+	fileWriteStream.end(function(err) {
+		if (err) {
+			errCallback(err);
+		} else {
+			errCallback();
+		}
+	});
+}
 FileEndpoint.prototype.closeFile = function(errCallback) {
 	this.fileWriteStream.removeAllListeners("drain");
 	var self = this;
-	// TODO stop timeout for max age
 	this.fileWriteStream.end(function(err) {
 		if (err) {
 			errCallback(err);
@@ -175,6 +197,7 @@ FileEndpoint.prototype.closeFile = function(errCallback) {
 			self.file = undefined;
 			self.fileBusy = undefined;
 			self.fileSize = undefined;
+			clearTimeout(self.fileTimer);
 			self.fileWriteStream = undefined;
 			try {
 				errCallback();
@@ -187,11 +210,12 @@ FileEndpoint.prototype.closeFile = function(errCallback) {
 FileEndpoint.prototype.rollFile = function(errCallback) {
 	var oldFile = this.file;
 	var self = this;
-	this.closeFile(function(err) {
+	var oldFileWriteStream = this.fileWriteStream;
+	self.createFile(function(err) {
 		if (err) {
 			errCallback(err);
 		} else {
-			self.createFile(function(err) {
+			closeFileWriteStream(oldFileWriteStream, function(err) {
 				if (err) {
 					errCallback(err);
 				} else {
@@ -206,6 +230,9 @@ FileEndpoint.prototype.rollFile = function(errCallback) {
 	});
 };
 FileEndpoint.prototype.stop = function(errCallback) {
+	if (this.fileWriteStream === undefined) {
+		throw new Error("Can not stop twice");
+	}
 	this.closeFile(errCallback);
 };
 FileEndpoint.prototype.getFiles = function(callback) {
@@ -251,15 +278,15 @@ module.exports = function(debug, info, error, critial, dir, filePrefix, fileSuff
 	assert.string(filePrefix, "filePrefix");
 	assert.string(fileSuffix, "fileSuffix");
 	assert.number(maxFileSize, "maxFileSize");
-	if (maxFileSize <= 1) {
+	if (maxFileSize < 1) {
 		assert.fail(maxFileSize, 1, "maxFileSize", ">=");
 	}
 	assert.number(maxFileAge, "maxFileAge");
-	if (maxFileAge <= 1) {
+	if (maxFileAge < 1) {
 		assert.fail(maxFileAge, 1, "maxFileAge", ">=");
 	}
 	assert.number(maxFiles, "maxFiles");
-	if (maxFiles <= 1) {
+	if (maxFiles < 1) {
 		assert.fail(maxFiles, 1, "maxFiles", ">=");
 	}
 	fs.stat(dir, function (err, stat) {

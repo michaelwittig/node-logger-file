@@ -21,7 +21,7 @@ describe("roll", function(){
 				}
 			};
 			var rolls = 0;
-			endpoint(true, true, true, true, "./test/log", "roll_", ".txt", 1024 * 1024, 60, 10, function(err, e) {
+			endpoint(true, true, true, true, "./test/log", "roll_", ".txt", 1024 * 1024, 60 * 60, 10, function(err, e) {
 				if (err) {
 					throw err;
 				} else {
@@ -34,7 +34,7 @@ describe("roll", function(){
 						if (err) {
 							throw err;
 						} else {
-							e.stop(function() {
+							e.stop(function(err) {
 								if (err) {
 									throw err;
 								} else {
