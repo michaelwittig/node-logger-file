@@ -72,6 +72,10 @@ Async creates a file Endpoint.
 
 ### Events
 
+#### stop()
+
+When the endpoint is stopped.
+
 #### error(err)
 
 Something went wrong in the background e.g. roll because of max age reached.
