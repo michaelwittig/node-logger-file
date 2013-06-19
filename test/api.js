@@ -1,5 +1,4 @@
-var assert = require("assert-plus"),
-	util = require("util"),
+var util = require("util"),
 	endpoint = require("../index");
 
 describe("API", function(){

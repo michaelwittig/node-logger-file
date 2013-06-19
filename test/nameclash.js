@@ -5,7 +5,7 @@ var assert = require("assert-plus"),
 	lib = require("./lib");
 
 describe("nameclash", function(){
-	describe("log()", function() {
+	describe("()", function() {
 		it("should write tow new files", function(done) {
 			var log = {
 				level: "debug",
@@ -20,7 +20,7 @@ describe("nameclash", function(){
 					fn: "testfn"
 				}
 			};
-			endpoint(true, true, true, true, "./test/log", "nameclash_", ".txt", 100, 60, 10, function(err, e) {
+			endpoint(true, true, true, true, "./test/log", "nameclash_", ".txt", 100, 60, 1000, function(err, e) {
 				if (err) {
 					throw err;
 				} else {
@@ -50,7 +50,7 @@ describe("nameclash", function(){
 													timestamps[timestamp] += 1;
 												}
 											});
-											assert.ok(clashes > 100, "more than 100 nameclashes happened");
+											assert.ok(clashes > 0, "at least one nameclash happened");
 											done();
 										}
 									});

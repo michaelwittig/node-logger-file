@@ -81,8 +81,21 @@ FileEndpoint.prototype.openFile = function(file, errCallback) {
 		}
 	});
 };
+FileEndpoint.prototype.deleteFile = function(file, errCallback) {
+	var self = this;
+	fs.unlink(file, function(err) {
+		if (err) {
+			errCallback(err);
+		} else {
+			try {
+				errCallback();
+			} finally {
+				self.emit("deleteFile", file);
+			}
+		}
+	});
+};
 FileEndpoint.prototype.createFile = function(errCallback) {
-	// TODO check if maxFiles limit is reached and delete the oldest file
 	var self = this;
 	function create(file) {
 		self.file = file;
@@ -115,7 +128,41 @@ FileEndpoint.prototype.createFile = function(errCallback) {
 			}
 		});
 	}
-	check(0, this.dir + "/" + getFileName(this.filePrefix, this.fileSuffix));
+	function del(i, files, errCallback) {
+		if (i >= files.length) {
+			errCallback();
+		} else {
+			self.deleteFile(files[i].file, function(err) {
+				if (err) {
+					errCallback(err);
+				} else {
+					del(i + 1, files, errCallback);
+				}
+			});
+		}
+	}
+
+	this.getFiles(function(err, files) {
+		if (err) {
+			errCallback(err);
+		} else {
+			if (files.length >= self.maxFiles) {
+				del(self.maxFiles - 1, files, function(err) {
+					if (err) {
+						errCallback(err);
+					} else {
+						check(0, self.dir + "/" + getFileName(self.filePrefix, self.fileSuffix));
+					}
+				});
+			} else {
+				check(0, self.dir + "/" + getFileName(self.filePrefix, self.fileSuffix));
+			}
+		}
+	});
+
+
+
+
 };
 FileEndpoint.prototype.closeFile = function(errCallback) {
 	this.fileWriteStream.removeAllListeners("drain");

@@ -4,9 +4,9 @@ var assert = require("assert-plus"),
 	fs = require("fs"),
 	lib = require("./lib");
 
-describe("roll", function(){
+describe("maxfiles", function(){
 	describe("()", function() {
-		it("should write tow new files", function(done) {
+		it("should create 6 files and delete 4", function(done) {
 			var log = {
 				level: "debug",
 				date: new Date(),
@@ -20,17 +20,18 @@ describe("roll", function(){
 					fn: "testfn"
 				}
 			};
-			var rolls = 0;
-			endpoint(true, true, true, true, "./test/log", "roll_", ".txt", 1024 * 1024, 60, 10, function(err, e) {
+			var deletes = 0, creates = 0;
+			endpoint(true, true, true, true, "./test/log", "maxfiles_", ".txt", 2, 2, 2, function(err, e) {
 				if (err) {
 					throw err;
 				} else {
-					e.on("rollFile", function(oldFile, newFile) {
-						rolls += 1;
-						lib.checkFileSize(oldFile, 1024 * 1024);
+					e.on("deleteFile", function(file) {
+						deletes += 1;
 					});
-					var times = 20000;
-					lib.logMultipleTimes(e, log, 0, times, function(err) {
+					e.on("createFile", function(file) {
+						creates += 1;
+					});
+					lib.logMultipleTimes(e, log, 0, 5, function(err) {
 						if (err) {
 							throw err;
 						} else {
@@ -38,7 +39,8 @@ describe("roll", function(){
 								if (err) {
 									throw err;
 								} else {
-									assert.equal(rolls, 3, "3 rolls expected");
+									assert.equal(creates, 6, "6 creates expected");
+									assert.equal(deletes, 4, "4 deletes expected");
 									done();
 								}
 							});
