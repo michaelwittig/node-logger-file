@@ -78,6 +78,8 @@ File was opened and is ready to be written.
 
 * `file`: File (path and name)
 
+**Example:**
+
 `````javascript
 var endpoint = require("cinovo-logger-file")(true, true, true, true, "./log", "log", ".txt", 1, 60, 10);
 endpoint.on("openFile", function(file) { ... });
@@ -89,6 +91,8 @@ logger.append(endpoint);
 File was created and is ready to be written.
 
 * `file`: File (path and name)
+
+**Example:**
 
 `````javascript
 var endpoint = require("cinovo-logger-file")(true, true, true, true, "./log", "log", ".txt", 1, 60, 10);
@@ -103,6 +107,8 @@ If the file size gets to big or the file gets to old the current file is replace
 * `oldFile`: File that is too big or too old (path and name)
 * `newFile`: File ready to be written (path and name)
 
+**Example:**
+
 `````javascript
 var endpoint = require("cinovo-logger-file")(true, true, true, true, "./log", "log", ".txt", 1, 60, 10);
 endpoint.on("closeFile", function(file) { ... });
@@ -114,6 +120,8 @@ logger.append(endpoint);
 File was closed and is ready to be written.
 
 * `file`: File (path and name)
+
+**Example:**
 
 `````javascript
 var endpoint = require("cinovo-logger-file")(true, true, true, true, "./log", "log", ".txt", 1, 60, 10);
