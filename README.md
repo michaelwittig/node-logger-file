@@ -72,11 +72,17 @@ Async creates a file Endpoint.
 
 ### Events
 
+#### error(err)
+
+Something went wrong in the background e.g. roll because of max age reached.
+
+* `err`: Error
+
 #### openFile(file)
 
 File was opened and is ready to be written.
 
-* `file`: File (path and name)
+* `file`: String - path and name
 
 **Example:**
 
@@ -90,7 +96,7 @@ logger.append(endpoint);
 
 File was created and is ready to be written.
 
-* `file`: File (path and name)
+* `file`: String - path and name
 
 **Example:**
 
@@ -104,8 +110,8 @@ logger.append(endpoint);
 
 If the file size gets to big or the file gets to old the current file is replaced with a new one. This is called a roll.
 
-* `oldFile`: File that is too big or too old (path and name)
-* `newFile`: File ready to be written (path and name)
+* `oldFile`: String - file that is too big or too old (path and name)
+* `newFile`: String - file ready to be written (path and name)
 
 **Example:**
 
@@ -119,7 +125,7 @@ logger.append(endpoint);
 
 File was closed and is ready to be written.
 
-* `file`: File (path and name)
+* `file`: String - path and name
 
 **Example:**
 
