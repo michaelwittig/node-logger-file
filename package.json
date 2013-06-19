@@ -33,7 +33,7 @@
 		"node": ">= 0.6.0"
 	},
 	"scripts": {
-		"test": "mocha test/*"
+		"test": "rm -Rf test/log/* && mocha test/*"
 	},
 	"readmeFilename": "README.md",
 	"bugs": {

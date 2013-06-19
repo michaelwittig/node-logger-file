@@ -63,6 +63,6 @@ Creates a file Endpoint.
 * `dir`: String - directory in which log files are saved.
 * `fileSuffix`: String -
 * `filePrefix`: String -
-* `maxFileSize`: Number -
-* `maxFileAge`: Number -
+* `maxFileSize`: Number - bytes
+* `maxFileAge`: Number - seconds
 * `maxFiles`: Number - Maximum Number of files in dir (oldest are removed first)

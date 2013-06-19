@@ -4,8 +4,20 @@ var assert = require("assert-plus"),
 
 describe("API", function(){
 	describe("()", function() {
-		it("should work if all params are set", function(){
-			endpoint(true, true, true, true, "./test/log", "fileSuffix", "filePrefix", 10, 60, 10);
+		it("should work if all params are set", function(done) {
+			endpoint(true, true, true, true, "./test/log", "api_", ".txt", 10, 60, 10, function(err, e) {
+				if (err) {
+					throw err;
+				} else {
+					e.stop(function(err) {
+						if (err) {
+							throw err;
+						} else {
+							done();
+						}
+					});
+				}
+			});
 		});
 	});
 });
