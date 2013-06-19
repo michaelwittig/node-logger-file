@@ -25,7 +25,7 @@ describe("roll", function(){
 				if (err) {
 					throw err;
 				} else {
-					e.on("rollFile", function(oldFile, nwwFile) {
+					e.on("rollFile", function(oldFile, newFile) {
 						rolls += 1;
 						lib.checkFileSize(oldFile, 1024 * 1024);
 					});

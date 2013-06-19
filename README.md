@@ -61,8 +61,8 @@ Async creates a file Endpoint.
 * `error`: Boolean - true if the endpoint should log error level
 * `critical`: Boolean - true if the endpoint should log critical level
 * `dir`: String - directory in which log files are saved.
-* `fileSuffix`: String -
 * `filePrefix`: String -
+* `fileSuffix`: String -
 * `maxFileSize`: Number - bytes
 * `maxFileAge`: Number - seconds
 * `maxFiles`: Number - Maximum Number of files in dir (oldest are removed first)

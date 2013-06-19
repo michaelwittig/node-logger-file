@@ -9,24 +9,24 @@ function twoDigitMin(number) {
 	}
 	return number;
 }
-function getFileName(suffix, prefix) {
+function getFileName(prefix, suffix) {
 	var fileName = "";
-	if (suffix) {
-		fileName += suffix;
+	if (prefix) {
+		fileName += prefix;
 	}
 	var date = new Date();
 	fileName += date.getUTCFullYear() + "-" + twoDigitMin(date.getUTCMonth() + 1) + "-" + twoDigitMin(date.getUTCDate()) + "_" + date.getUTCHours() + "-" + date.getUTCMinutes() + "-" + date.getUTCSeconds() + "-" + date.getUTCMilliseconds();
-	if (prefix) {
-		fileName += prefix;
+	if (suffix) {
+		fileName += suffix;
 	}
 	return fileName;
 }
 
-function FileEndpoint(debug, info, error, critial, dir, fileSuffix, filePrefix, maxFileSize, maxFileAge, maxFiles, formatter) {
+function FileEndpoint(debug, info, error, critial, dir, filePrefix, fileSuffix, maxFileSize, maxFileAge, maxFiles, formatter) {
 	logger.Endpoint.call(this, debug, info, error, critial);
 	this.dir = dir;
-	this.fileSuffix = fileSuffix;
 	this.filePrefix = filePrefix;
+	this.fileSuffix = fileSuffix;
 	this.maxFileSize = maxFileSize;
 	this.maxFileAge = maxFileAge;
 	this.maxFiles = maxFiles;
@@ -35,7 +35,6 @@ function FileEndpoint(debug, info, error, critial, dir, fileSuffix, filePrefix, 
 	this.fileBusy = undefined;
 	this.fileSize = undefined;  // in bytes
 	this.fileWriteStream = undefined;
-	// TODO crateFile() or openFile()
 }
 util.inherits(FileEndpoint, logger.Endpoint);
 FileEndpoint.prototype.log = function(log, errCallback) {
@@ -59,19 +58,30 @@ FileEndpoint.prototype.log = function(log, errCallback) {
 		}
 	}
 };
-FileEndpoint.prototype.openFile = function(errCallback) {
-	this.file = ""; // TODO get last filename
+FileEndpoint.prototype.openFile = function(file, errCallback) {
+	this.file = file;
 	this.fileBusy = false;
-	this.fileSize = 0; //TODO init with current filesize
-	this.fileWriteStream = fs.createWriteStream(this.file, {
-		flags: "a",
-		encoding: "utf8",
-		mode: 0666
+	var self = this;
+	fs.stat(this.file, function(err, stats) {
+		if (err) {
+			errCallback(err);
+		} else {
+			self.fileSize = stats.size;
+			self.fileWriteStream = fs.createWriteStream(self.file, {
+				flags: "a",
+				encoding: "utf8",
+				mode: 0666
+			});
+			try {
+				errCallback(); // TODO listen for error evets? how to detect if the writestream could not be created
+			} finally {
+				self.emit("openFile", self.file);
+			}
+		}
 	});
-	this.emit("openFile", this.file);
-	errCallback(); // TODO listen for error evets?
 };
-FileEndpoint.prototype.crateFile = function(errCallback) {
+FileEndpoint.prototype.createFile = function(errCallback) {
+	// TODO check if maxFiles limit is reached and delete the oldest file
 	var self = this;
 	function create(file) {
 		self.file = file;
@@ -82,8 +92,11 @@ FileEndpoint.prototype.crateFile = function(errCallback) {
 			encoding: "utf8",
 			mode: 0666
 		});
-		self.emit("crateFile", self.file);
-		errCallback(); // TODO listen for error evets?
+		try {
+			errCallback(); // TODO listen for error evets? how to detect if the writestream could not be created
+		} finally {
+			self.emit("createFile", self.file);
+		}
 	}
 	function check(i, origFileName) {
 		var fileName;
@@ -100,7 +113,7 @@ FileEndpoint.prototype.crateFile = function(errCallback) {
 			}
 		});
 	}
-	check(0, this.dir + "/" + getFileName(this.fileSuffix, this.filePrefix));
+	check(0, this.dir + "/" + getFileName(this.filePrefix, this.fileSuffix));
 };
 FileEndpoint.prototype.closeFile = function(errCallback) {
 	this.fileWriteStream.removeAllListeners("drain");
@@ -109,12 +122,15 @@ FileEndpoint.prototype.closeFile = function(errCallback) {
 		if (err) {
 			errCallback(err);
 		} else {
-			self.emit("closeFile", self.file);
 			self.file = undefined;
 			self.fileBusy = undefined;
 			self.fileSize = undefined;
 			self.fileWriteStream = undefined;
-			errCallback();
+			try {
+				errCallback();
+			} finally {
+				self.emit("closeFile", self.file);
+			}
 		}
 	});
 };
@@ -125,12 +141,15 @@ FileEndpoint.prototype.rollFile = function(errCallback) {
 		if (err) {
 			errCallback(err);
 		} else {
-			self.crateFile(function(err) {
+			self.createFile(function(err) {
 				if (err) {
 					errCallback(err);
 				} else {
-					self.emit("rollFile", oldFile, self.file);
-					errCallback();
+					try {
+						errCallback();
+					} finally {
+						self.emit("rollFile", oldFile, self.file);
+					}
 				}
 			});
 		}
@@ -139,17 +158,48 @@ FileEndpoint.prototype.rollFile = function(errCallback) {
 FileEndpoint.prototype.stop = function(errCallback) {
 	this.closeFile(errCallback);
 };
+FileEndpoint.prototype.getFiles = function(callback) {
+	var self = this;
+	fs.readdir(self.dir, function(err, files) {
+		if (err) {
+			callback(err);
+		} else {
+			var oldFiles = [];
+			files.forEach(function(file) {
+				if ((file.indexOf(self.filePrefix) === 0) && (file.indexOf(self.fileSuffix) === (file.length - self.fileSuffix.length))) {
+					var stats = fs.statSync(self.dir + "/" + file);
+					oldFiles.push({
+						name: file,
+						file: self.dir + "/" + file,
+						size: stats.size,
+						created_at: stats.ctime
+					});
+				}
+			});
+			oldFiles = oldFiles.sort(function(a, b) {
+				if (b.created_at.getTime() > a.created_at.getTime()) {
+					return 1;
+				}
+				if (b.created_at.getTime() < a.created_at.getTime()) {
+					return -1;
+				}
+				return 0;
+			});
+			callback(undefined, oldFiles);
+		}
+	});
+};
 
 function canWrite(owner, inGroup, mode) {
-	return owner && (mode & 00200) || // User is owner and owner can write.
-		inGroup && (mode & 00020) || // User is in group and group can write.
+	return (owner && (mode & 00200)) || // User is owner and owner can write.
+		(inGroup && (mode & 00020)) || // User is in group and group can write.
 		(mode & 00002); // Anyone can write.
 }
 
-module.exports = function(debug, info, error, critial, dir, fileSuffix, filePrefix, maxFileSize, maxFileAge, maxFiles, callback) {
+module.exports = function(debug, info, error, critial, dir, filePrefix, fileSuffix, maxFileSize, maxFileAge, maxFiles, callback) {
 	assert.string(dir, "dir");
-	assert.string(fileSuffix, "fileSuffix");
 	assert.string(filePrefix, "filePrefix");
+	assert.string(fileSuffix, "fileSuffix");
 	assert.number(maxFileSize, "maxFileSize");
 	if (maxFileSize <= 1) {
 		assert.fail(maxFileSize, 1, "maxFileSize", ">=");
@@ -171,13 +221,40 @@ module.exports = function(debug, info, error, critial, dir, fileSuffix, filePref
 			}
 		}
 	});
-	// TODO check fileage, roll if too old or setTimer for first timed roll
-	var e = new FileEndpoint(debug, info, error, critial, dir, fileSuffix, filePrefix, maxFileSize, maxFileAge, maxFiles, "json");
-	e.crateFile(function(err) {
+
+	var e = new FileEndpoint(debug, info, error, critial, dir, filePrefix, fileSuffix, maxFileSize, maxFileAge, maxFiles, "json");
+
+	function create() {
+		e.createFile(function(err) {
+			if (err) {
+				callback(err);
+			} else {
+				callback(undefined, e);
+			}
+		});
+	}
+
+	e.getFiles(function(err, files) {
 		if (err) {
 			callback(err);
 		} else {
-			callback(undefined, e);
+			if (files.length > 0) {
+				var file = files[0];
+				if (file.created_at.getTime() > ((new Date()).getTime() - (maxFileAge * 1000))) {
+					e.openFile(file.file, function(err) {
+						if (err) {
+							callback(err);
+						} else {
+							callback(undefined, e);
+						}
+					});
+				} else {
+					create();
+				}
+			} else {
+				create();
+			}
 		}
 	});
+
 };
