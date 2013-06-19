@@ -68,11 +68,6 @@ FileEndpoint.prototype.openFile = function(file, errCallback) {
 			self.file = file;
 			self.fileBusy = false;
 			self.fileSize = stats.size;
-			self.fileWriteStream = fs.createWriteStream(self.file, {
-				flags: "a",
-				encoding: "utf8",
-				mode: 0666
-			});
 			var fileLifeTime = (new Date()).getTime() - stats.ctime.getTime();
 			var timeout = Math.max(1, (self.maxFileAge * 1000) - fileLifeTime);
 			clearTimeout(self.fileTimer);
@@ -83,11 +78,30 @@ FileEndpoint.prototype.openFile = function(file, errCallback) {
 					}
 				});
 			}, timeout);
-			try {
-				errCallback(); // TODO listen for error evets? how to detect if the writestream could not be created
-			} finally {
-				self.emit("openFile", self.file);
-			}
+			self.fileWriteStream = fs.createWriteStream(self.file, {
+				flags: "a",
+				encoding: "utf8",
+				mode: 0666
+			});
+			var fired = false;
+			self.fileWriteStream.once("open", function() {
+				if (fired === false) {
+					fired = true;
+					try {
+						errCallback();
+					} finally {
+						self.emit("openFile", self.file);
+					}
+				}
+			});
+			self.fileWriteStream.on("error", function(err) {
+				if (fired === false) {
+					fired = true;
+					errCallback(err);
+				} else {
+					self.emit("error", err);
+				}
+			});
 		}
 	});
 };
@@ -124,11 +138,25 @@ FileEndpoint.prototype.createFile = function(errCallback) {
 				}
 			});
 		}, self.maxFileAge * 1000);
-		try {
-			errCallback(); // TODO listen for error evets? how to detect if the writestream could not be created
-		} finally {
-			self.emit("createFile", self.file);
-		}
+		var fired = false;
+		self.fileWriteStream.once("open", function() {
+			if (fired === false) {
+				fired = true;
+				try {
+					errCallback();
+				} finally {
+					self.emit("createFile", self.file);
+				}
+			}
+		});
+		self.fileWriteStream.on("error", function(err) {
+			if (fired === false) {
+				fired = true;
+				errCallback(err);
+			} else {
+				self.emit("error", err);
+			}
+		});
 	}
 	function check(i, origFileName) {
 		var fileName;
