@@ -25,11 +25,9 @@ describe("roll", function(){
 				if (err) {
 					throw err;
 				} else {
-					e.on("closeFile", function(file) {
+					e.on("rollFile", function(oldFile, nwwFile) {
 						rolls += 1;
-						if (rolls < 4) {
-							lib.checkFileSize(file, 1024 * 1024);
-						}
+						lib.checkFileSize(oldFile, 1024 * 1024);
 					});
 					var times = 20000;
 					lib.logMultipleTimes(e, log, 0, times, function(err) {
@@ -40,7 +38,7 @@ describe("roll", function(){
 								if (err) {
 									throw err;
 								} else {
-									assert.equal(4, rolls, "4 rolls expected");
+									assert.equal(3, rolls, "3 rolls expected");
 									done();
 								}
 							});

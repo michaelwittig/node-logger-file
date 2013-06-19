@@ -119,12 +119,20 @@ FileEndpoint.prototype.closeFile = function(errCallback) {
 	});
 };
 FileEndpoint.prototype.rollFile = function(errCallback) {
+	var oldFile = this.file;
 	var self = this;
 	this.closeFile(function(err) {
 		if (err) {
 			errCallback(err);
 		} else {
-			self.crateFile(errCallback);
+			self.crateFile(function(err) {
+				if (err) {
+					errCallback(err);
+				} else {
+					self.emit("rollFile", oldFile, self.file);
+					errCallback();
+				}
+			});
 		}
 	});
 };

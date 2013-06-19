@@ -52,9 +52,9 @@ Now you can log to file endpoint.
 
 ## API
 
-### (debug, info, error, critial, dir, fileSuffix, filePrefix, maxFileSize, maxFileAge, maxFiles)
+### (debug, info, error, critial, dir, fileSuffix, filePrefix, maxFileSize, maxFileAge, maxFiles, callback)
 
-Creates a file Endpoint.
+Async creates a file Endpoint.
 
 * `debug`: Boolean - true if the endpoint should log debug level
 * `info`: Boolean - true if the endpoint should log info level
@@ -66,3 +66,57 @@ Creates a file Endpoint.
 * `maxFileSize`: Number - bytes
 * `maxFileAge`: Number - seconds
 * `maxFiles`: Number - Maximum Number of files in dir (oldest are removed first)
+* `callback`: Function(err, endpoint) - fired if the endpoint is ready to use
+    * `err`: Error (optional)
+    * `endpoint`: Endpoint - use the endpoint like this logger.append(endpoint)
+
+### Events
+
+#### openFile(file)
+
+File was opened and is ready to be written.
+
+* `file`: File (path and name)
+
+`````javascript
+var endpoint = require("cinovo-logger-file")(true, true, true, true, "./log", "log", ".txt", 1, 60, 10);
+endpoint.on("openFile", function(file) { ... });
+logger.append(endpoint);
+`````
+
+#### createFile(file)
+
+File was created and is ready to be written.
+
+* `file`: File (path and name)
+
+`````javascript
+var endpoint = require("cinovo-logger-file")(true, true, true, true, "./log", "log", ".txt", 1, 60, 10);
+endpoint.on("createFile", function(file) { ... });
+logger.append(endpoint);
+`````
+
+#### rollFile(oldFile, newFile)
+
+If the file size gets to big or the file gets to old the current file is replaced with a new one. This is called a roll.
+
+* `oldFile`: File that is too big or too old (path and name)
+* `newFile`: File ready to be written (path and name)
+
+`````javascript
+var endpoint = require("cinovo-logger-file")(true, true, true, true, "./log", "log", ".txt", 1, 60, 10);
+endpoint.on("closeFile", function(file) { ... });
+logger.append(endpoint);
+`````
+
+#### closeFile(file)
+
+File was closed and is ready to be written.
+
+* `file`: File (path and name)
+
+`````javascript
+var endpoint = require("cinovo-logger-file")(true, true, true, true, "./log", "log", ".txt", 1, 60, 10);
+endpoint.on("closeFile", function(file) { ... });
+logger.append(endpoint);
+`````
