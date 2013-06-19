@@ -59,6 +59,12 @@ FileEndpoint.prototype.log = function(log, errCallback) {
 		}
 	}
 };
+FileEndpoint.prototype.stop = function(errCallback) {
+	if (this.fileWriteStream === undefined) {
+		throw new Error("Can not stop twice");
+	}
+	this.closeFile(errCallback);
+};
 FileEndpoint.prototype.openFile = function(file, errCallback) {
 	var self = this;
 	fs.stat(file, function(err, stats) {
@@ -256,12 +262,6 @@ FileEndpoint.prototype.rollFile = function(errCallback) {
 			});
 		}
 	});
-};
-FileEndpoint.prototype.stop = function(errCallback) {
-	if (this.fileWriteStream === undefined) {
-		throw new Error("Can not stop twice");
-	}
-	this.closeFile(errCallback);
 };
 FileEndpoint.prototype.getFiles = function(callback) {
 	var self = this;
