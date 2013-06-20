@@ -43,5 +43,23 @@ function logMultipleTimes(e, log, i, n, errCallback) {
 		});
 	}
 }
-
 exports.logMultipleTimes = logMultipleTimes;
+
+exports.logMultipleTimesHeavy = function(e, log, n, errCallback) {
+	var errors = 0, callbacks = 0, i = 0;
+	for (i = 0; i < n; i++) {
+		e.log(log, function(err) {
+			if (err) {
+				errors += 1;
+			}
+			callbacks += 1;
+			if (callbacks == n) {
+				if (errors > 0) {
+					errCallback(new Error("We saw " + errors + " errors which is " + (errors/callbacks*100) + "%"));
+				} else {
+					errCallback();
+				}
+			}
+		});
+	}
+};

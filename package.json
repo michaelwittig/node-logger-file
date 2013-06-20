@@ -1,6 +1,6 @@
 {
 	"name": "cinovo-logger-file",
-	"version": "0.2.5",
+	"version": "0.2.6",
 	"description": "File endpoint for cinovo-logger.",
 	"keywords": [
 		"logger",

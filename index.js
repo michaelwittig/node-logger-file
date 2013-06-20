@@ -47,6 +47,7 @@ FileEndpoint.prototype.log = function(log, errCallback) {
 		var self = this;
 		if (this.fileWriteStream.write(buffer, function(err) {
 			if (self.fileSize > self.maxFileSize) {
+				self.fileSize = Number.MIN_VALUE; // prevents the file from rolling again with more logs arrive before new file is created
 				self.rollFile(errCallback);
 			} else {
 				errCallback(err);
