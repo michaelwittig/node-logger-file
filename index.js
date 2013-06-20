@@ -70,7 +70,7 @@ FileEndpoint.prototype.stop = function(errCallback) {
 			errCallback(err);
 		} else {
 			try {
-			errCallback();
+				errCallback();
 			} finally {
 				self.emit("stop", file);
 			}
