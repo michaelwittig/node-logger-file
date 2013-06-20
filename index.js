@@ -63,6 +63,7 @@ FileEndpoint.prototype.stop = function(errCallback) {
 	if (this.fileWriteStream === undefined) {
 		throw new Error("Can not stop twice");
 	}
+	var file = this.file;
 	var self = this;
 	this.closeFile(function(err) {
 		if (err) {
@@ -71,7 +72,7 @@ FileEndpoint.prototype.stop = function(errCallback) {
 			try {
 			errCallback();
 			} finally {
-				self.emit("stop");
+				self.emit("stop", file);
 			}
 		}
 	});

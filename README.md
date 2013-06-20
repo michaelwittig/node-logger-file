@@ -72,9 +72,11 @@ Async creates a file Endpoint.
 
 ### Events
 
-#### stop()
+#### stop(lastFile)
 
 When the endpoint is stopped.
+
+* `lastFile`: String - path and name
 
 #### error(err)
 
