@@ -23,7 +23,7 @@ function getFileName(prefix, suffix) {
 }
 
 function FileEndpoint(debug, info, error, critial, dir, filePrefix, fileSuffix, maxFileSize, maxFileAge, maxFiles, formatter) {
-	logger.Endpoint.call(this, debug, info, error, critial);
+	logger.Endpoint.call(this, debug, info, error, critial, "file:" + dir);
 	this.dir = dir;
 	this.filePrefix = filePrefix;
 	this.fileSuffix = fileSuffix;
