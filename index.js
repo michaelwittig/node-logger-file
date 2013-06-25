@@ -36,15 +36,35 @@ function FileEndpoint(debug, info, error, critial, dir, filePrefix, fileSuffix, 
 	this.fileSize = undefined;  // in bytes
 	this.fileWriteStream = undefined;
 	this.fileTimer = undefined;
+	this.logsPerSecond = {
+		"debug": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // this array consists of 10 buckets. each bucket can be accessed be (new Date()).getTime() % 10
+		"info": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		"error": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		"critical": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+	};
 }
 util.inherits(FileEndpoint, logger.Endpoint);
 FileEndpoint.prototype.log = function(log, errCallback) {
+	var second = (new Date()).getTime() % 10;
+	var logsPerSecond = this.logsPerSecond[log.level];
+	logsPerSecond[second] += 1;
+	var nextSecond = (second < 9) ? second + 1 : 0;
+	logsPerSecond[nextSecond] = 0;
+	var previousSecond = (second > 0) ? second - 1 : 9;
+	var self = this;
 	if (this.fileBusy === true) {
+		if (logsPerSecond[previousSecond] > 100) {
+			this.levels[log.level] = false;
+			this.emit("pause", log.level, logsPerSecond[previousSecond]);
+			setTimeout(function() {
+				self.levels[log.level] = true;
+				self.emit("esuap", log.level);
+			}, 1000);
+		}
 		errCallback(new Error("file too busy"));
 	} else {
 		var buffer = new Buffer(this.formatter(log) + "\n", "utf8");
 		this.fileSize += buffer.length;
-		var self = this;
 		if (this.fileWriteStream.write(buffer, function(err) {
 			if (self.fileSize > self.maxFileSize) {
 				self.fileSize = Number.MIN_VALUE; // prevents the file from rolling again with more logs arrive before new file is created
@@ -56,7 +76,9 @@ FileEndpoint.prototype.log = function(log, errCallback) {
 			this.fileBusy = true;
 			this.fileWriteStream.once("drain", function() {
 				self.fileBusy = false;
+				self.emit("ysub");
 			});
+			this.emit("busy");
 		}
 	}
 };

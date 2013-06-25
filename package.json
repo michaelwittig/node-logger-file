@@ -1,6 +1,6 @@
 {
 	"name": "cinovo-logger-file",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"description": "File endpoint for cinovo-logger.",
 	"keywords": [
 		"logger",
@@ -31,7 +31,7 @@
 		"node": ">= 0.6.0"
 	},
 	"scripts": {
-		"test": "rm -Rf test/log/* && mocha --timeout 5000 test/*"
+		"test": "rm -Rf test/log/* && mocha --timeout 7000 test/*"
 	},
 	"readmeFilename": "README.md",
 	"bugs": {

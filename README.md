@@ -140,3 +140,26 @@ var endpoint = require("cinovo-logger-file")(true, true, true, true, "./log", "l
 endpoint.on("closeFile", function(file) { ... });
 logger.append(endpoint);
 `````
+
+#### busy()
+
+If the log file can not be written as fast as you send logs. In this situation you are losing log entries!
+
+#### ysub()
+
+If the log file can continue to be written.
+
+#### pause(level, logsInLastSecond)
+
+If the log file gets busy the file appender can pause levels for a second.
+The level is only paused if more than 100 logs in the last second were seen.
+For example the appender will stop writing debug messages but will continue to write error and critical logs.
+
+* `level`: String["debug", "info", "error", "critical"]
+* `logsInLastSecond`: Logs during the last second
+
+#### esuap(level)
+
+If the level is back from pause.
+
+* `level`: String["debug", "info", "error", "critical"]
