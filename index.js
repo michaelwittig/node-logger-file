@@ -15,7 +15,7 @@ function getFileName(prefix, suffix) {
 		fileName += prefix;
 	}
 	var date = new Date();
-	fileName += date.getUTCFullYear() + "-" + twoDigitMin(date.getUTCMonth() + 1) + "-" + twoDigitMin(date.getUTCDate()) + "_" + date.getUTCHours() + "-" + date.getUTCMinutes() + "-" + date.getUTCSeconds() + "-" + date.getUTCMilliseconds();
+	fileName += date.getFullYear() + "-" + twoDigitMin(date.getMonth() + 1) + "-" + twoDigitMin(date.getDate()) + "_" + date.getHours() + "-" + date.getMinutes() + "-" + date.getSeconds() + "-" + date.getMilliseconds();
 	if (suffix) {
 		fileName += suffix;
 	}
