@@ -72,7 +72,7 @@ Async creates a file Endpoint.
 
 ### Events
 
-#### stop(lastFile)
+#### _stop(lastFile)
 
 When the endpoint is stopped.
 

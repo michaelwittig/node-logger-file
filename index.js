@@ -1,5 +1,5 @@
 var util = require("util"),
-	logger = require("cinovo-logger"),
+	lib = require("cinovo-logger-lib"),
 	assert = require("assert-plus"),
 	fs = require("fs");
 
@@ -23,7 +23,7 @@ function getFileName(prefix, suffix) {
 }
 
 function FileEndpoint(debug, info, error, critial, dir, filePrefix, fileSuffix, maxFileSize, maxFileAge, maxFiles, formatter) {
-	logger.Endpoint.call(this, debug, info, error, critial, "file:" + dir);
+	lib.Endpoint.call(this, debug, info, error, critial, "file:" + dir);
 	this.dir = dir;
 	this.filePrefix = filePrefix;
 	this.fileSuffix = fileSuffix;
@@ -37,10 +37,10 @@ function FileEndpoint(debug, info, error, critial, dir, filePrefix, fileSuffix, 
 	this.fileWriteStream = undefined;
 	this.fileTimer = undefined;
 }
-util.inherits(FileEndpoint, logger.Endpoint);
-FileEndpoint.prototype.log = function(log, errCallback) {
+util.inherits(FileEndpoint, lib.Endpoint);
+FileEndpoint.prototype._log = function(log, callback) {
 	if (this.fileBusy === true) {
-		errCallback(new Error("file too busy"));
+		callback(new Error("file too busy"));
 	} else {
 		var buffer = new Buffer(this.formatter(log) + "\n", "utf8");
 		this.fileSize += buffer.length;
@@ -48,9 +48,9 @@ FileEndpoint.prototype.log = function(log, errCallback) {
 		if (this.fileWriteStream.write(buffer, function(err) {
 			if (self.fileSize > self.maxFileSize) {
 				self.fileSize = Number.MIN_VALUE; // prevents the file from rolling again with more logs arrive before new file is created
-				self.rollFile(errCallback);
+				self.rollFile(callback);
 			} else {
-				errCallback(err);
+				callback(err);
 			}
 		}) === false) {
 			this.fileBusy = true;
@@ -62,29 +62,26 @@ FileEndpoint.prototype.log = function(log, errCallback) {
 		}
 	}
 };
-FileEndpoint.prototype.stop = function(errCallback) {
-	if (this.fileWriteStream === undefined) {
-		throw new Error("Can not stop twice");
-	}
+FileEndpoint.prototype._stop = function(callback) {
 	var file = this.file;
 	var self = this;
 	this.closeFile(function(err) {
 		if (err) {
-			errCallback(err);
+			callback(err);
 		} else {
 			try {
-				errCallback();
+				callback();
 			} finally {
-				self.emit("stop", file);
+				self.emit("_stop", file);
 			}
 		}
 	});
 };
-FileEndpoint.prototype.openFile = function(file, errCallback) {
+FileEndpoint.prototype.openFile = function(file, callback) {
 	var self = this;
 	fs.stat(file, function(err, stats) {
 		if (err) {
-			errCallback(err);
+			callback(err);
 		} else {
 			self.file = file;
 			self.fileBusy = false;
@@ -109,7 +106,7 @@ FileEndpoint.prototype.openFile = function(file, errCallback) {
 				if (fired === false) {
 					fired = true;
 					try {
-						errCallback();
+						callback();
 					} finally {
 						self.emit("openFile", self.file);
 					}
@@ -118,7 +115,7 @@ FileEndpoint.prototype.openFile = function(file, errCallback) {
 			self.fileWriteStream.on("error", function(err) {
 				if (fired === false) {
 					fired = true;
-					errCallback(err);
+					callback(err);
 				} else {
 					self.emit("error", err);
 				}
@@ -126,21 +123,21 @@ FileEndpoint.prototype.openFile = function(file, errCallback) {
 		}
 	});
 };
-FileEndpoint.prototype.deleteFile = function(file, errCallback) {
+FileEndpoint.prototype.deleteFile = function(file, callback) {
 	var self = this;
 	fs.unlink(file, function(err) {
 		if (err) {
-			errCallback(err);
+			callback(err);
 		} else {
 			try {
-				errCallback();
+				callback();
 			} finally {
 				self.emit("deleteFile", file);
 			}
 		}
 	});
 };
-FileEndpoint.prototype.createFile = function(errCallback) {
+FileEndpoint.prototype.createFile = function(callback) {
 	var self = this;
 	function create(file) {
 		self.file = file;
@@ -164,7 +161,7 @@ FileEndpoint.prototype.createFile = function(errCallback) {
 			if (fired === false) {
 				fired = true;
 				try {
-					errCallback();
+					callback();
 				} finally {
 					self.emit("createFile", self.file);
 				}
@@ -173,7 +170,7 @@ FileEndpoint.prototype.createFile = function(errCallback) {
 		self.fileWriteStream.on("error", function(err) {
 			if (fired === false) {
 				fired = true;
-				errCallback(err);
+				callback(err);
 			} else {
 				self.emit("error", err);
 			}
@@ -194,15 +191,15 @@ FileEndpoint.prototype.createFile = function(errCallback) {
 			}
 		});
 	}
-	function del(i, files, errCallback) {
+	function del(i, files, callback) {
 		if (i >= files.length) {
-			errCallback();
+			callback();
 		} else {
 			self.deleteFile(files[i].file, function(err) {
 				if (err) {
-					errCallback(err);
+					callback(err);
 				} else {
-					del(i + 1, files, errCallback);
+					del(i + 1, files, callback);
 				}
 			});
 		}
@@ -210,12 +207,12 @@ FileEndpoint.prototype.createFile = function(errCallback) {
 
 	this.getFiles(function(err, files) {
 		if (err) {
-			errCallback(err);
+			callback(err);
 		} else {
 			if (files.length >= self.maxFiles) {
 				del(self.maxFiles - 1, files, function(err) {
 					if (err) {
-						errCallback(err);
+						callback(err);
 					} else {
 						check(0, self.dir + "/" + getFileName(self.filePrefix, self.fileSuffix));
 					}
@@ -226,22 +223,22 @@ FileEndpoint.prototype.createFile = function(errCallback) {
 		}
 	});
 };
-function closeFileWriteStream(fileWriteStream, errCallback) {
+function closeFileWriteStream(fileWriteStream, callback) {
 	fileWriteStream.removeAllListeners("drain");
 	fileWriteStream.end(function(err) {
 		if (err) {
-			errCallback(err);
+			callback(err);
 		} else {
-			errCallback();
+			callback();
 		}
 	});
 }
-FileEndpoint.prototype.closeFile = function(errCallback) {
+FileEndpoint.prototype.closeFile = function(callback) {
 	this.fileWriteStream.removeAllListeners("drain");
 	var self = this;
 	this.fileWriteStream.end(function(err) {
 		if (err) {
-			errCallback(err);
+			callback(err);
 		} else {
 			self.file = undefined;
 			self.fileBusy = undefined;
@@ -249,27 +246,27 @@ FileEndpoint.prototype.closeFile = function(errCallback) {
 			clearTimeout(self.fileTimer);
 			self.fileWriteStream = undefined;
 			try {
-				errCallback();
+				callback();
 			} finally {
 				self.emit("closeFile", self.file);
 			}
 		}
 	});
 };
-FileEndpoint.prototype.rollFile = function(errCallback) {
+FileEndpoint.prototype.rollFile = function(callback) {
 	var oldFile = this.file;
 	var self = this;
 	var oldFileWriteStream = this.fileWriteStream;
 	self.createFile(function(err) {
 		if (err) {
-			errCallback(err);
+			callback(err);
 		} else {
 			closeFileWriteStream(oldFileWriteStream, function(err) {
 				if (err) {
-					errCallback(err);
+					callback(err);
 				} else {
 					try {
-						errCallback();
+						callback();
 					} finally {
 						self.emit("rollFile", oldFile, self.file);
 					}

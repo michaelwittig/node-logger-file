@@ -3,7 +3,7 @@ var assert = require("assert-plus"),
 	endpoint = require("../index"),
 	fs = require("fs"),
 	lib = require("./lib"),
-	logger = require("cinovo-logger");
+	logger = require("cinovo-logger").createLogger();
 
 describe("busy", function(){
 	describe("()", function() {
@@ -36,7 +36,7 @@ describe("busy", function(){
 					var interval = setInterval(function() {
 						j += 1;
 						for (i = 0; i < 1000; i += 1) {
-							logger.debug("test", "message");
+							logger.debug("test", "message", function() {});
 						}
 						if (j >= 5) {
 							clearInterval(interval);
