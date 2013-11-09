@@ -10,6 +10,7 @@ circular:
 
 mocha:
 	@echo "mocha"
+	@mkdir -p test/log/
 	@rm -Rf test/log/*
 	@mocha --timeout 7000 test/*
 	@echo
