@@ -296,7 +296,9 @@ FileEndpoint.prototype.getFiles = function(callback) {
 			var oldFiles = [], stats;
 			files.forEach(function(file) {
 				if ((file.indexOf(self.filePrefix) === 0) && (file.indexOf(self.fileSuffix) === (file.length - self.fileSuffix.length))) {
+					/*jslint stupid: true*/
 					stats = fs.statSync(self.dir + "/" + file);
+					/*jslint stupid: false*/
 					oldFiles.push({
 						name: file,
 						file: self.dir + "/" + file,
@@ -319,15 +321,6 @@ FileEndpoint.prototype.getFiles = function(callback) {
 	});
 };
 
-function canWrite(owner, inGroup, mode) {
-	"use strict";
-	/** bitwise: true */
-	return (owner && (mode & 00200)) || // User is owner and owner can write.
-		(inGroup && (mode & 00020)) || // User is in group and group can write.
-		(mode & 00002); // Anyone can write.
-	/** bitwise: false */
-}
-
 module.exports = function(debug, info, error, critial, dir, filePrefix, fileSuffix, maxFileSize, maxFileAge, maxFiles, callback) {
 	"use strict";
 	assert.string(dir, "dir");
@@ -345,14 +338,6 @@ module.exports = function(debug, info, error, critial, dir, filePrefix, fileSuff
 	if (maxFiles < 1) {
 		assert.fail(maxFiles, 1, "maxFiles", ">=");
 	}
-	fs.stat(dir, function (err, stat) {
-		if (err) {
-			throw err;
-		}
-		if (!canWrite(process.getuid() === stat.uid, process.getgid() === stat.gid, stat.mode)) {
-			assert.ok(false, "Can not write dir");
-		}
-	});
 
 	var e = new FileEndpoint(debug, info, error, critial, dir, filePrefix, fileSuffix, maxFileSize, maxFileAge, maxFiles, "json");
 
