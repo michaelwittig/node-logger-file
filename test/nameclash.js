@@ -4,7 +4,8 @@ var assert = require("assert-plus"),
 	fs = require("fs"),
 	lib = require("./lib");
 
-describe("nameclash", function(){
+describe("nameclash", function() {
+	"use strict";
 	describe("()", function() {
 		it("should write tow new files", function(done) {
 			var log = {
@@ -20,45 +21,42 @@ describe("nameclash", function(){
 					fn: "testfn"
 				}
 			};
-			endpoint(true, true, true, true, "./test/log", "nameclash_", ".txt", 100, 60 * 60, 1000, function(err, e) {
+			endpoint(true, true, true, true, "./test/log", "nameclash_", ".txt", 100, 60 * 60, 1000, function (err, e) {
 				if (err) {
 					throw err;
-				} else {
-					var times = 500;
-					lib.logMultipleTimes(e, log, 0, times, function(err) {
+				}
+				var times = 500;
+				lib.logMultipleTimes(e, log, 0, times, function (err) {
+					if (err) {
+						throw err;
+					}
+					e.stop(function () {
 						if (err) {
 							throw err;
-						} else {
-							e.stop(function() {
-								if (err) {
-									throw err;
-								} else {
-									fs.readdir("./test/log", function(err, files) {
-										if (err) {
-											throw err;
-										} else {
-											var timestamps = {}; var clashes = 0;
-											files.forEach(function(file) {
-												if (file.indexOf("nameclash_") === 0)	{
-													var timestamp = file.substr(10);
-													timestamp = timestamp.substr(0, timestamp.indexOf(".txt"));
-													if (!timestamps[timestamp]) {
-														timestamps[timestamp] = 0;
-													} else {
-														clashes += 1;
-													}
-													timestamps[timestamp] += 1;
-												}
-											});
-											assert.ok(clashes > 0, "at least one nameclash happened");
-											done();
-										}
-									});
+						}
+						fs.readdir("./test/log", function (err, files) {
+							if (err) {
+								throw err;
+							}
+							var timestamps = {},
+								clashes = 0;
+							files.forEach(function (file) {
+								if (file.indexOf("nameclash_") === 0) {
+									var timestamp = file.substr(10);
+									timestamp = timestamp.substr(0, timestamp.indexOf(".txt"));
+									if (!timestamps[timestamp]) {
+										timestamps[timestamp] = 0;
+									} else {
+										clashes += 1;
+									}
+									timestamps[timestamp] += 1;
 								}
 							});
-						}
+							assert.ok(clashes > 0, "at least one nameclash happened");
+							done();
+						});
 					});
-				}
+				});
 			});
 		});
 	});

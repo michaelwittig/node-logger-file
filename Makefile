@@ -2,17 +2,17 @@ default: test
 
 jslint:
 	@echo "jslint"
-	@jslint *.js
+	@./node_modules/jslint/bin/jslint.js --white --nomen --node --predef describe --predef it *.js
 
 circular:
 	@echo "circular"
-	@madge --circular --format amd .
+	@./node_modules/madge/bin/madge --circular --format amd .
 
 mocha:
 	@echo "mocha"
 	@mkdir -p test/log/
 	@rm -Rf test/log/*
-	@mocha --timeout 7000 test/*
+	@./node_modules/mocha/bin/mocha --timeout 7000 test/*.js
 	@echo
 
 test: mocha circular
@@ -21,4 +21,4 @@ test: mocha circular
 
 outdated:
 	@echo "outdated modules?"
-	@npmedge
+	@./node_modules/npmedge/bin/npmedge

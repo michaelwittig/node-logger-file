@@ -4,17 +4,19 @@ var util = require("util"),
 	fs = require("fs");
 
 function twoDigitMin(number) {
+	"use strict";
 	if (number >= 0 && number < 10) {
 		return "0" + number;
 	}
 	return number;
 }
 function getFileName(prefix, suffix) {
-	var fileName = "";
+	"use strict";
+	var date = new Date(),
+		fileName = "";
 	if (prefix) {
 		fileName += prefix;
 	}
-	var date = new Date();
 	fileName += date.getFullYear() + "-" + twoDigitMin(date.getMonth() + 1) + "-" + twoDigitMin(date.getDate()) + "_" + date.getHours() + "-" + date.getMinutes() + "-" + date.getSeconds() + "-" + date.getMilliseconds();
 	if (suffix) {
 		fileName += suffix;
@@ -23,6 +25,7 @@ function getFileName(prefix, suffix) {
 }
 
 function FileEndpoint(debug, info, error, critial, dir, filePrefix, fileSuffix, maxFileSize, maxFileAge, maxFiles, formatter) {
+	"use strict";
 	lib.Endpoint.call(this, debug, info, error, critial, "file:" + dir);
 	this.dir = dir;
 	this.filePrefix = filePrefix;
@@ -39,12 +42,13 @@ function FileEndpoint(debug, info, error, critial, dir, filePrefix, fileSuffix, 
 }
 util.inherits(FileEndpoint, lib.Endpoint);
 FileEndpoint.prototype._log = function(log, callback) {
+	"use strict";
 	if (this.fileBusy === true) {
 		callback(new Error("file too busy"));
 	} else {
-		var buffer = new Buffer(this.formatter(log) + "\n", "utf8");
+		var self = this,
+			buffer = new Buffer(this.formatter(log) + "\n", "utf8");
 		this.fileSize += buffer.length;
-		var self = this;
 		if (this.fileWriteStream.write(buffer, function(err) {
 			if (self.fileSize > self.maxFileSize) {
 				self.fileSize = Number.MIN_VALUE; // prevents the file from rolling again with more logs arrive before new file is created
@@ -63,8 +67,9 @@ FileEndpoint.prototype._log = function(log, callback) {
 	}
 };
 FileEndpoint.prototype._stop = function(callback) {
-	var file = this.file;
-	var self = this;
+	"use strict";
+	var file = this.file,
+		self = this;
 	this.closeFile(function(err) {
 		if (err) {
 			callback(err);
@@ -78,6 +83,7 @@ FileEndpoint.prototype._stop = function(callback) {
 	});
 };
 FileEndpoint.prototype.openFile = function(file, callback) {
+	"use strict";
 	var self = this;
 	fs.stat(file, function(err, stats) {
 		if (err) {
@@ -86,8 +92,9 @@ FileEndpoint.prototype.openFile = function(file, callback) {
 			self.file = file;
 			self.fileBusy = false;
 			self.fileSize = stats.size;
-			var fileLifeTime = (new Date()).getTime() - stats.ctime.getTime();
-			var timeout = Math.max(1, (self.maxFileAge * 1000) - fileLifeTime);
+			var fileLifeTime = (new Date()).getTime() - stats.ctime.getTime(),
+				timeout = Math.max(1, (self.maxFileAge * 1000) - fileLifeTime),
+				fired = false;
 			clearTimeout(self.fileTimer);
 			self.fileTimer = setTimeout(function() {
 				self.rollFile(function(err) {
@@ -99,9 +106,8 @@ FileEndpoint.prototype.openFile = function(file, callback) {
 			self.fileWriteStream = fs.createWriteStream(self.file, {
 				flags: "a",
 				encoding: "utf8",
-				mode: 0666
+				mode: "0666"
 			});
-			var fired = false;
 			self.fileWriteStream.once("open", function() {
 				if (fired === false) {
 					fired = true;
@@ -124,6 +130,7 @@ FileEndpoint.prototype.openFile = function(file, callback) {
 	});
 };
 FileEndpoint.prototype.deleteFile = function(file, callback) {
+	"use strict";
 	var self = this;
 	fs.unlink(file, function(err) {
 		if (err) {
@@ -138,6 +145,7 @@ FileEndpoint.prototype.deleteFile = function(file, callback) {
 	});
 };
 FileEndpoint.prototype.createFile = function(callback) {
+	"use strict";
 	var self = this;
 	function create(file) {
 		self.file = file;
@@ -146,7 +154,7 @@ FileEndpoint.prototype.createFile = function(callback) {
 		self.fileWriteStream = fs.createWriteStream(file, {
 			flags: "a",
 			encoding: "utf8",
-			mode: 0666
+			mode: "0666"
 		});
 		clearTimeout(self.fileTimer);
 		self.fileTimer = setTimeout(function() {
@@ -224,6 +232,7 @@ FileEndpoint.prototype.createFile = function(callback) {
 	});
 };
 function closeFileWriteStream(fileWriteStream, callback) {
+	"use strict";
 	fileWriteStream.removeAllListeners("drain");
 	fileWriteStream.end(function(err) {
 		if (err) {
@@ -234,6 +243,7 @@ function closeFileWriteStream(fileWriteStream, callback) {
 	});
 }
 FileEndpoint.prototype.closeFile = function(callback) {
+	"use strict";
 	this.fileWriteStream.removeAllListeners("drain");
 	var self = this;
 	this.fileWriteStream.end(function(err) {
@@ -254,9 +264,10 @@ FileEndpoint.prototype.closeFile = function(callback) {
 	});
 };
 FileEndpoint.prototype.rollFile = function(callback) {
-	var oldFile = this.file;
-	var self = this;
-	var oldFileWriteStream = this.fileWriteStream;
+	"use strict";
+	var oldFile = this.file,
+		self = this,
+		oldFileWriteStream = this.fileWriteStream;
 	self.createFile(function(err) {
 		if (err) {
 			callback(err);
@@ -276,15 +287,16 @@ FileEndpoint.prototype.rollFile = function(callback) {
 	});
 };
 FileEndpoint.prototype.getFiles = function(callback) {
+	"use strict";
 	var self = this;
 	fs.readdir(self.dir, function(err, files) {
 		if (err) {
 			callback(err);
 		} else {
-			var oldFiles = [];
+			var oldFiles = [], stats;
 			files.forEach(function(file) {
 				if ((file.indexOf(self.filePrefix) === 0) && (file.indexOf(self.fileSuffix) === (file.length - self.fileSuffix.length))) {
-					var stats = fs.statSync(self.dir + "/" + file);
+					stats = fs.statSync(self.dir + "/" + file);
 					oldFiles.push({
 						name: file,
 						file: self.dir + "/" + file,
@@ -308,12 +320,16 @@ FileEndpoint.prototype.getFiles = function(callback) {
 };
 
 function canWrite(owner, inGroup, mode) {
+	"use strict";
+	/** bitwise: true */
 	return (owner && (mode & 00200)) || // User is owner and owner can write.
 		(inGroup && (mode & 00020)) || // User is in group and group can write.
 		(mode & 00002); // Anyone can write.
+	/** bitwise: false */
 }
 
 module.exports = function(debug, info, error, critial, dir, filePrefix, fileSuffix, maxFileSize, maxFileAge, maxFiles, callback) {
+	"use strict";
 	assert.string(dir, "dir");
 	assert.string(filePrefix, "filePrefix");
 	assert.string(fileSuffix, "fileSuffix");
@@ -332,10 +348,9 @@ module.exports = function(debug, info, error, critial, dir, filePrefix, fileSuff
 	fs.stat(dir, function (err, stat) {
 		if (err) {
 			throw err;
-		} else {
-			if (!canWrite(process.getuid() === stat.uid, process.getgid() === stat.gid, stat.mode)) {
-				assert.ok(false, "Can not write dir");
-			}
+		}
+		if (!canWrite(process.getuid() === stat.uid, process.getgid() === stat.gid, stat.mode)) {
+			assert.ok(false, "Can not write dir");
 		}
 	});
 

@@ -4,7 +4,8 @@ var assert = require("assert-plus"),
 	fs = require("fs"),
 	lib = require("./lib");
 
-describe("maxfiles", function(){
+describe("maxfiles", function() {
+	"use strict";
 	describe("()", function() {
 		it("should create 6 files and delete 4", function(done) {
 			var log = {
@@ -19,34 +20,32 @@ describe("maxfiles", function(){
 					line: 123,
 					fn: "testfn"
 				}
-			};
-			var deletes = 0, creates = 0;
+			},
+				deletes = 0,
+				creates = 0;
 			endpoint(true, true, true, true, "./test/log", "maxfiles_", ".txt", 2, 60 * 60, 2, function(err, e) {
 				if (err) {
 					throw err;
-				} else {
-					e.on("deleteFile", function(file) {
-						deletes += 1;
-					});
-					e.on("createFile", function(file) {
-						creates += 1;
-					});
-					lib.logMultipleTimes(e, log, 0, 5, function(err) {
+				}
+				e.on("deleteFile", function() {
+					deletes += 1;
+				});
+				e.on("createFile", function() {
+					creates += 1;
+				});
+				lib.logMultipleTimes(e, log, 0, 5, function(err) {
+					if (err) {
+						throw err;
+					}
+					e.stop(function() {
 						if (err) {
 							throw err;
-						} else {
-							e.stop(function() {
-								if (err) {
-									throw err;
-								} else {
-									assert.equal(creates, 6, "6 creates expected");
-									assert.equal(deletes, 4, "4 deletes expected");
-									done();
-								}
-							});
 						}
+						assert.equal(creates, 6, "6 creates expected");
+						assert.equal(deletes, 4, "4 deletes expected");
+						done();
 					});
-				}
+				});
 			});
 		});
 	});

@@ -3,7 +3,8 @@ var util = require("util"),
 	fs = require("fs"),
 	lib = require("./lib");
 
-describe("formatter.json", function(){
+describe("formatter.json", function() {
+	"use strict";
 	describe("log()", function() {
 		it("should write a new json file", function(done) {
 			var log = {
@@ -22,22 +23,19 @@ describe("formatter.json", function(){
 			endpoint(true, true, true, true, "./test/log", "formatter_json_", ".txt", 1024, 60, 10, function(err, e) {
 				if (err) {
 					throw err;
-				} else {
-					var file = e.file;
-					e.log(log, function(err) {
+				}
+				var file = e.file;
+				e.log(log, function(err) {
+					if (err) {
+						throw err;
+					}
+					e.stop(function() {
 						if (err) {
 							throw err;
-						} else {
-							e.stop(function() {
-								if (err) {
-									throw err;
-								} else {
-									lib.checkFile(file, JSON.stringify(log) + "\n", 1, done);
-								}
-							});
 						}
+						lib.checkFile(file, JSON.stringify(log) + "\n", 1, done);
 					});
-				}
+				});
 			});
 		});
 	});
