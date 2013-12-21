@@ -12,6 +12,7 @@
 
 [![Build Status](https://secure.travis-ci.org/cinovo/node-logger-file.png)](http://travis-ci.org/cinovo/node-logger-file)
 [![NPM version](https://badge.fury.io/js/cinovo-logger-file.png)](http://badge.fury.io/js/cinovo-logger-file)
+[![NPM dependencies](https://david-dm.org/cinovo/node-logger-file.png)](https://david-dm.org/cinovo/node-logger-file)
 
 # cinovo-logger-file
 
