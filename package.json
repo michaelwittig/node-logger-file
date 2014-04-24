@@ -1,6 +1,6 @@
 {
 	"name": "cinovo-logger-file",
-	"version": "0.4.4",
+	"version": "0.4.5",
 	"description": "File endpoint for cinovo-logger.",
 	"keywords": [
 		"logger",
@@ -21,15 +21,15 @@
 		"url": "https://github.com/cinovo/node-logger-file.git"
 	},
 	"dependencies": {
-		"cinovo-logger-lib": ">=0.4.3 <0.5.0",
+		"cinovo-logger-lib": "0.4.5",
 		"assert-plus": "0.1.5"
 	},
 	"devDependencies": {
-		"cinovo-logger": ">=0.4.5 <0.5.0",
-		"mocha": "1.15.1",
-		"jslint": "0.2.5",
-		"madge": "0.1.7",
-		"npmedge": "0.1.4",
+		"cinovo-logger": "0.4.11",
+		"mocha": "1.18.2",
+		"jslint": "0.3.3",
+		"madge": "0.2.0",
+		"npmedge": "0.1.5",
 		"node-uuid": "1.4.1"
 	},
 	"main": "index",
