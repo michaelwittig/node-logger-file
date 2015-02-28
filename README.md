@@ -10,13 +10,13 @@
                                                                       \_/__/  \_/__/
 `````
 
-[![Build Status](https://secure.travis-ci.org/cinovo/node-logger-file.png)](http://travis-ci.org/cinovo/node-logger-file)
+[![Build Status](https://secure.travis-ci.org/michaelwittig/node-logger-file.png)](http://travis-ci.org/michaelwittig/node-logger-file)
 [![NPM version](https://badge.fury.io/js/cinovo-logger-file.png)](http://badge.fury.io/js/cinovo-logger-file)
-[![NPM dependencies](https://david-dm.org/cinovo/node-logger-file.png)](https://david-dm.org/cinovo/node-logger-file)
+[![NPM dependencies](https://david-dm.org/michaelwittig/node-logger-file.png)](https://david-dm.org/michaelwittig/node-logger-file)
 
 # cinovo-logger-file
 
-File endpoint for [cinovo-logger](https://github.com/cinovo/node-logger).
+File endpoint for [cinovo-logger](https://github.com/michaelwittig/node-logger).
 
 ## Getting started
 
